@@ -847,6 +847,109 @@ facebook/react"></textarea>
             `Last updated: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
     }
 
+    function loadSampleData() {
+        const sampleData = `<div class="project">
+                <div class="project-title">* <a href="#" onclick="alert('This would link to the actual GitHub project board'); return false;" style="color: #00ffff; text-decoration: none; border-bottom: 1px dotted #555;">my-awesome-project</a></div>
+                <div class="section">
+                    <div class="section-title">-- In Progress</div>
+                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Fix authentication bug in user login</a></div>
+                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Implement dark mode toggle</a></div>
+                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Update API documentation</a></div>
+                </div>
+                <div class="section">
+                    <div class="section-title">-- Ready (top 2)</div>
+                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Add unit tests for payment module</a></div>
+                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Optimize database queries</a></div>
+                </div>
+                <div class="section">
+                    <div class="section-title">-- Backlog (top 2)</div>
+                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Refactor legacy code in utils</a></div>
+                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Add support for multiple languages</a></div>
+                </div>
+            </div>
+
+            <div class="project">
+                <div class="project-title">* <a href="#" onclick="alert('This would link to the actual GitHub project board'); return false;" style="color: #00ffff; text-decoration: none; border-bottom: 1px dotted #555;">mobile-app</a></div>
+                <div class="section">
+                    <div class="section-title">-- In Progress</div>
+                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Implement push notifications</a></div>
+                </div>
+                <div class="section">
+                    <div class="section-title">-- Ready (top 2)</div>
+                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Design new onboarding flow</a></div>
+                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Fix crash on iOS 16</a></div>
+                </div>
+                <div class="section">
+                    <div class="section-title">-- Backlog (top 2)</div>
+                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Add offline mode support</a></div>
+                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Implement biometric authentication</a></div>
+                </div>
+            </div>
+
+            <div class="project">
+                <div class="project-title">* <a href="#" onclick="alert('This would link to the actual GitHub project board'); return false;" style="color: #00ffff; text-decoration: none; border-bottom: 1px dotted #555;">web-dashboard</a></div>
+                <div class="section">
+                    <div class="section-title">-- In Progress</div>
+                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Refactor component architecture</a></div>
+                </div>
+                <div class="section">
+                    <div class="section-title">-- Ready (top 2)</div>
+                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Add data export functionality</a></div>
+                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Improve responsive design</a></div>
+                </div>
+                <div class="section">
+                    <div class="section-title">-- Backlog (top 2)</div>
+                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Implement real-time updates</a></div>
+                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Add user role management</a></div>
+                </div>
+            </div>
+
+            <div class="project">
+                <div class="project-title">* <a href="#" onclick="alert('This would link to the actual GitHub project board'); return false;" style="color: #00ffff; text-decoration: none; border-bottom: 1px dotted #555;">api-service</a></div>
+                <div class="section">
+                    <div class="section-title">-- In Progress</div>
+                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Optimize database connections</a></div>
+                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Add rate limiting</a></div>
+                </div>
+                <div class="section">
+                    <div class="section-title">-- Ready (top 2)</div>
+                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Implement caching layer</a></div>
+                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Add monitoring endpoints</a></div>
+                </div>
+                <div class="section">
+                    <div class="section-title">-- Backlog (top 2)</div>
+                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Migrate to microservices</a></div>
+                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Add GraphQL support</a></div>
+                </div>
+            </div>`;
+
+        document.getElementById('dashboard').innerHTML = sampleData;
+
+        // Also show sample workflow status
+        const sampleWorkflowData = `<div class="workflow-item" style="color: #00ff00;">
+                <span style="color: #666;">├─</span>
+                <span style="color: #00ff00;">●</span>
+                <span>my-org/my-awesome-project</span>
+                <span style="color: #888; font-size: 11px; margin-left: 5px;">(Success)</span>
+            </div>
+            <div class="workflow-item" style="color: #ffff00;">
+                <span style="color: #666;">├─</span>
+                <span style="color: #ffff00;">●</span>
+                <span>my-org/mobile-app</span>
+                <span style="color: #888; font-size: 11px; margin-left: 5px;">(In Progress)</span>
+            </div>
+            <div class="workflow-item" style="color: #ff5555;">
+                <span style="color: #666;">└─</span>
+                <span style="color: #ff5555;">●</span>
+                <span>my-org/api-service</span>
+                <span style="color: #888; font-size: 11px; margin-left: 5px;">(Failed)</span>
+            </div>`;
+
+        document.getElementById('workflowStatus').innerHTML = sampleWorkflowData;
+        document.getElementById('workflowStatusSection').style.display = 'block';
+        updateTimestamp();
+    }
+
     async function loadAvailableProjects() {
         const token = document.getElementById('tokenInput').value || sessionStorage.getItem('githubToken');
 
@@ -1207,7 +1310,8 @@ facebook/react"></textarea>
         const projects = sessionStorage.getItem('githubProjects');
 
         if (!token || !projects) {
-            // No settings exist, show settings pane
+            // No settings exist, show sample data and settings pane
+            loadSampleData();
             toggleSettings();
         } else {
             // Settings exist, load all projects
