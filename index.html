@@ -519,15 +519,6 @@ facebook/react"></textarea>
                         return true;
                     }
                 }
-
-                // Fall back to labels
-                if (item.content.labels) {
-                    return item.content.labels.nodes.some(label =>
-                        label.name.toLowerCase().includes('progress') ||
-                        label.name.toLowerCase().includes('doing') ||
-                        label.name.toLowerCase().includes('active')
-                    );
-                }
                 return false;
             });
 
@@ -542,15 +533,6 @@ facebook/react"></textarea>
                         return true;
                     }
                 }
-
-                // Fall back to labels
-                if (item.content.labels) {
-                    return item.content.labels.nodes.some(label =>
-                        label.name.toLowerCase().includes('ready') ||
-                        label.name.toLowerCase().includes('todo') ||
-                        label.name.toLowerCase().includes('next')
-                    );
-                }
                 return false;
             }).slice(0, 2);
 
@@ -561,26 +543,11 @@ facebook/react"></textarea>
                 );
                 if (statusField && statusField.name) {
                     const status = statusField.name.toLowerCase();
-                    // If it has a status but it's not one of the tracked ones, it's backlog
-                    if (!status.includes('progress') && !status.includes('doing') &&
-                        !status.includes('active') && !status.includes('ready') &&
-                        !status.includes('todo') && !status.includes('next')) {
+                    if (status.includes('backlog')) {
                         return true;
                     }
-                    return false;
                 }
-
-                // Fall back to label-based logic
-                if (item.content.labels) {
-                    return !item.content.labels.nodes.some(label => {
-                        const name = label.name.toLowerCase();
-                        return name.includes('progress') || name.includes('doing') ||
-                            name.includes('ready') || name.includes('todo') ||
-                            name.includes('active') || name.includes('next');
-                    });
-                }
-                // Items without status field or labels go to backlog
-                return true;
+                return false;
             }).slice(0, 2);
 
             return formatProject(project.title, project.url, { inProgress, ready, backlog });
