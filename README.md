@@ -7,7 +7,12 @@ This can be useful if you keep track of tasks across multiple Github Projects, a
 Deploy the index.html file to a place of your choosing (e.g. GitHub Pages, Netlify, Vercel, etc.)
 
 ## Usage
-- Uses GitHub OAuth App with Device Flow to authenticate (https://github.com/settings/developers)
-- Device flow allows authentication without a redirect URI, making it perfect for static deployments
-- If deploying manually, change GITHUB_CLIENT_ID in index.html to your own OAuth app client ID
-- During authentication, you'll be given a code to enter at https://github.com/login/device
+- Uses GitHub Personal Access Token (PAT) for authentication
+- Create a PAT at https://github.com/settings/tokens with `read:project` scope
+- Enter your token in the Settings panel of the dashboard
+- Perfect for static deployments with no server-side authentication needed
+
+### Why not OAuth?
+- OAuth with Github requires server-side components, they do not currently support client-side only flows
+- More info: 
+- https://github.com/orgs/community/discussions/15752
