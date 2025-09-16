@@ -76,6 +76,12 @@
             margin-bottom: 15px;
         }
 
+        .project-title a:hover {
+            color: #00ff00 !important;
+            border-bottom-color: #00ff00 !important;
+            text-shadow: 0 0 5px #00ff0050;
+        }
+
         .section {
             margin-bottom: 15px;
             margin-left: 10px;
@@ -258,14 +264,13 @@
 <body>
 <div class="terminal">
     <div class="header">
-        GITHUB TASK DASHBOARD
+        GITHUB DASHBOARD
         <span class="cursor">_</span>
     </div>
 
     <div class="header-controls">
         <div>
             <button onclick="refresh()" id="refreshBtn">Refresh</button>
-            <button onclick="loadSampleData()">Sample</button>
         </div>
         <button onclick="toggleSettings()">Settings</button>
     </div>
@@ -439,6 +444,7 @@ facebook/react"></textarea>
                 node(id: $projectId) {
                     ... on ProjectV2 {
                         title
+                        url
                         items(first: 100) {
                             nodes {
                                 id
@@ -587,7 +593,7 @@ facebook/react"></textarea>
                 return true;
             }).slice(0, 2);
 
-            return formatProject(project.title, { inProgress, ready, backlog });
+            return formatProject(project.title, project.url, { inProgress, ready, backlog });
 
         } catch (error) {
             return `<div class="project">
@@ -620,21 +626,6 @@ facebook/react"></textarea>
                     repository(owner: $owner, name: $repo) {
                         name
                         nameWithOwner
-                        defaultBranchRef {
-                            target {
-                                ... on Commit {
-                                    checkSuites(first: 1) {
-                                        nodes {
-                                            status
-                                            conclusion
-                                            workflowRun {
-                                                url
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
                     }
                 }
             `;
@@ -673,8 +664,23 @@ facebook/react"></textarea>
                     continue;
                 }
 
-                const checkSuites = repository.defaultBranchRef?.target?.checkSuites?.nodes || [];
-                if (checkSuites.length === 0) {
+                // Now fetch the latest workflow run using REST API
+                const workflowResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/runs?per_page=1`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/vnd.github+json'
+                    }
+                });
+
+                if (!workflowResponse.ok) {
+                    throw new Error(`Failed to fetch workflow runs: ${workflowResponse.status}`);
+                }
+
+                const workflowData = await workflowResponse.json();
+                const workflowRuns = workflowData.workflow_runs || [];
+
+                if (workflowRuns.length === 0) {
                     results.push({
                         repository: repoName,
                         status: 'no-workflows',
@@ -683,18 +689,15 @@ facebook/react"></textarea>
                     continue;
                 }
 
-                const latestCheckSuite = checkSuites[0];
-                const workflowRun = latestCheckSuite.workflowRun;
-
+                const latestRun = workflowRuns[0];
                 let status = 'unknown';
-                let conclusion = latestCheckSuite.conclusion;
 
-                // Check suite status logic
-                if (latestCheckSuite.status === 'IN_PROGRESS' || latestCheckSuite.status === 'QUEUED') {
+                // Workflow run status logic
+                if (latestRun.status === 'in_progress' || latestRun.status === 'queued' || latestRun.status === 'waiting') {
                     status = 'in_progress';
-                } else if (latestCheckSuite.conclusion === 'SUCCESS') {
+                } else if (latestRun.conclusion === 'success') {
                     status = 'success';
-                } else if (latestCheckSuite.conclusion === 'FAILURE' || latestCheckSuite.conclusion === 'CANCELLED' || latestCheckSuite.conclusion === 'TIMED_OUT') {
+                } else if (latestRun.conclusion === 'failure' || latestRun.conclusion === 'cancelled' || latestRun.conclusion === 'timed_out') {
                     status = 'failure';
                 }
 
@@ -702,8 +705,8 @@ facebook/react"></textarea>
                     repository: repoName,
                     nameWithOwner: repository.nameWithOwner,
                     status: status,
-                    conclusion: conclusion,
-                    url: workflowRun?.url
+                    conclusion: latestRun.conclusion,
+                    url: latestRun.html_url
                 });
 
             } catch (error) {
@@ -785,9 +788,9 @@ facebook/react"></textarea>
         return output;
     }
 
-    function formatProject(projectName, sections) {
+    function formatProject(projectName, projectUrl, sections) {
         let output = `<div class="project">
-                <div class="project-title">* ${projectName}</div>`;
+                <div class="project-title">* <a href="${projectUrl}" target="_blank" style="color: #00ffff; text-decoration: none; border-bottom: 1px dotted #555;">${projectName}</a></div>`;
 
         if (sections.inProgress.length > 0) {
             output += `<div class="section">
@@ -837,85 +840,6 @@ facebook/react"></textarea>
         return title.length > maxLength ? title.substring(0, maxLength) + '...' : title;
     }
 
-    function loadSampleData() {
-        const sampleData = `<div class="project">
-                <div class="project-title">* my-awesome-project</div>
-                <div class="section">
-                    <div class="section-title">-- In Progress</div>
-                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Fix authentication bug in user login</a></div>
-                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Implement dark mode toggle</a></div>
-                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Update API documentation</a></div>
-                </div>
-                <div class="section">
-                    <div class="section-title">-- Ready (Limited to top 2 items)</div>
-                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Add unit tests for payment module</a></div>
-                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Optimize database queries</a></div>
-                </div>
-                <div class="section">
-                    <div class="section-title">-- Backlog (Limited to top 2 items)</div>
-                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Refactor legacy code in utils</a></div>
-                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Add support for multiple languages</a></div>
-                </div>
-            </div>
-
-            <div class="project">
-                <div class="project-title">* mobile-app</div>
-                <div class="section">
-                    <div class="section-title">-- In Progress</div>
-                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Implement push notifications</a></div>
-                </div>
-                <div class="section">
-                    <div class="section-title">-- Ready (Limited to top 2 items)</div>
-                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Design new onboarding flow</a></div>
-                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Fix crash on iOS 16</a></div>
-                </div>
-                <div class="section">
-                    <div class="section-title">-- Backlog (Limited to top 2 items)</div>
-                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Add offline mode support</a></div>
-                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Implement biometric authentication</a></div>
-                </div>
-            </div>
-
-            <div class="project">
-                <div class="project-title">* web-dashboard</div>
-                <div class="section">
-                    <div class="section-title">-- In Progress</div>
-                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Refactor component architecture</a></div>
-                </div>
-                <div class="section">
-                    <div class="section-title">-- Ready (Limited to top 2 items)</div>
-                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Add data export functionality</a></div>
-                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Improve responsive design</a></div>
-                </div>
-                <div class="section">
-                    <div class="section-title">-- Backlog (Limited to top 2 items)</div>
-                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Implement real-time updates</a></div>
-                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Add user role management</a></div>
-                </div>
-            </div>
-
-            <div class="project">
-                <div class="project-title">* api-service</div>
-                <div class="section">
-                    <div class="section-title">-- In Progress</div>
-                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Optimize database connections</a></div>
-                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Add rate limiting</a></div>
-                </div>
-                <div class="section">
-                    <div class="section-title">-- Ready (Limited to top 2 items)</div>
-                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Implement caching layer</a></div>
-                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Add monitoring endpoints</a></div>
-                </div>
-                <div class="section">
-                    <div class="section-title">-- Backlog (Limited to top 2 items)</div>
-                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Migrate to microservices</a></div>
-                    <div class="item"><a href="#" onclick="alert('This would link to the actual GitHub issue'); return false;">Add GraphQL support</a></div>
-                </div>
-            </div>`;
-
-        document.getElementById('dashboard').innerHTML = sampleData;
-        updateTimestamp();
-    }
 
     function updateTimestamp() {
         const now = new Date();
@@ -1277,7 +1201,20 @@ facebook/react"></textarea>
     // Initialize on page load
     window.onload = () => {
         loadStoredSettings();
-        loadSampleData();
+
+        // Check if settings exist
+        const token = sessionStorage.getItem('githubToken');
+        const projects = sessionStorage.getItem('githubProjects');
+
+        if (!token || !projects) {
+            // No settings exist, show settings pane
+            toggleSettings();
+        } else {
+            // Settings exist, load all projects
+            refresh();
+            // Start auto-refresh every 30 minutes (1800000 ms)
+            setInterval(refresh, 1800000);
+        }
 
         // Start auto-refresh for workflow status
         startWorkflowAutoRefresh();
