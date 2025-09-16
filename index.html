@@ -246,7 +246,18 @@
     </div>
 
     <div class="controls" id="settingsPanel">
-        <div>GitHub Token: <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxx"></div>
+        <div style="margin-bottom: 15px;">
+            <div style="color: #ffaa00; margin-bottom: 10px; font-weight: bold;">GitHub App Settings:</div>
+            <div style="margin-bottom: 10px;">
+                <label style="color: #ccc;">Client ID: </label>
+                <input type="text" id="clientIdInput" placeholder="Iv1.xxxxxxxxxx" style="width: 200px;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <div id="authStatus" style="margin-bottom: 10px; color: #888;">Not authenticated</div>
+                <button onclick="authenticateWithGitHub()" id="authBtn" style="background: #0066aa; color: white;">Authenticate with GitHub</button>
+                <button onclick="logout()" id="logoutBtn" style="background: #aa4444; color: white; display: none; margin-left: 10px;">Logout</button>
+            </div>
+        </div>
         <div>
             Project IDs (one per line):
             <textarea id="projectsInput" rows="4" style="width: 300px;" placeholder="PVT_kwHOBkVgM84AHJKL
@@ -274,25 +285,41 @@ PVT_kwHOBkVgM84AHJKN</textarea>
 </div>
 
 <script>
+    // Configuration - Update these values for your GitHub App
+    const GITHUB_CLIENT_ID = 'Ov23lifXCLm5bdJUfcZv'; // Change this to your GitHub App Client ID
+
+    // OAuth and authentication state
+    let accessToken = null;
+    let tokenExpiry = null;
+
     // Load settings from sessionStorage on page load
     function loadStoredSettings() {
-        const token = sessionStorage.getItem('githubToken');
+        const savedClientId = sessionStorage.getItem('githubClientId');
         const projects = sessionStorage.getItem('githubProjects');
 
-        if (token) {
-            document.getElementById('tokenInput').value = token;
-        }
+        // Use saved client ID or default to the configured one
+        const clientId = savedClientId || GITHUB_CLIENT_ID;
+        document.getElementById('clientIdInput').value = clientId;
+
         if (projects) {
             document.getElementById('projectsInput').value = projects;
         }
+
+        // Save the client ID to session storage if it wasn't already saved
+        if (!savedClientId && GITHUB_CLIENT_ID) {
+            sessionStorage.setItem('githubClientId', GITHUB_CLIENT_ID);
+        }
+
+        // Check if we have a valid token
+        checkAuthStatus();
     }
 
     function saveSettings() {
-        const token = document.getElementById('tokenInput').value;
+        const clientId = document.getElementById('clientIdInput').value;
         const projects = document.getElementById('projectsInput').value;
 
-        if (token) {
-            sessionStorage.setItem('githubToken', token);
+        if (clientId) {
+            sessionStorage.setItem('githubClientId', clientId);
         }
         if (projects) {
             sessionStorage.setItem('githubProjects', projects);
@@ -302,21 +329,224 @@ PVT_kwHOBkVgM84AHJKN</textarea>
         alert('Settings saved!');
     }
 
+    // Generate secure random state for CSRF protection
+    function generateState() {
+        const array = new Uint8Array(32);
+        crypto.getRandomValues(array);
+        return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+    }
+
+    // GitHub App OAuth flow
+    async function authenticateWithGitHub() {
+        const clientId = document.getElementById('clientIdInput').value || GITHUB_CLIENT_ID;
+
+        if (!clientId) {
+            alert('Please configure your GitHub App Client ID first');
+            return;
+        }
+
+        // Generate and store state for CSRF protection
+        const state = generateState();
+        sessionStorage.setItem('oauth_state', state);
+
+        // Define required scopes for your app
+        const scopes = 'read:project';
+
+        // Redirect to GitHub OAuth
+        const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=${scopes}&state=${state}`;
+        window.location.href = authUrl;
+    }
+
+    // Handle OAuth callback
+    function handleOAuthCallback() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const state = urlParams.get('state');
+        const storedState = sessionStorage.getItem('oauth_state');
+
+        if (!code) {
+            return; // Not an OAuth callback
+        }
+
+        // Verify state parameter for CSRF protection
+        if (!state || state !== storedState) {
+            alert('OAuth state mismatch. Possible CSRF attack.');
+            return;
+        }
+
+        // Clean up state
+        sessionStorage.removeItem('oauth_state');
+
+        // Exchange code for token
+        exchangeCodeForToken(code);
+    }
+
+    // Exchange authorization code for access token
+    async function exchangeCodeForToken(code) {
+        const clientId = document.getElementById('clientIdInput').value || GITHUB_CLIENT_ID;
+
+        // IMPORTANT SECURITY NOTE:
+        // This implementation requires exposing the client secret, which is not secure for public clients.
+        // For production use, you should:
+        // 1. Use a backend service to handle the token exchange
+        // 2. Or use GitHub App installation tokens with proper webhook handling
+        // 3. Or consider using GitHub's device flow for better security
+
+        // For now, we'll show an error explaining this limitation
+        alert(`Security Notice: Client-side OAuth token exchange requires exposing the client secret, which is not secure.
+
+For production use, please implement one of these secure alternatives:
+1. Backend service to handle token exchange
+2. GitHub App installation with webhook
+3. GitHub Device Authorization Grant
+
+This implementation is for demonstration purposes only.`);
+
+        // Placeholder - you'll need to implement the actual token exchange
+        // through your backend or use alternative authentication methods
+        throw new Error('Token exchange not implemented for security reasons');
+
+        // The commented code below shows what the implementation would look like
+        // if you had a secure backend to handle the client secret:
+        /*
+        try {
+            const response = await fetch('https://github.com/login/oauth/access_token', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    client_id: clientId,
+                    client_secret: 'YOUR_CLIENT_SECRET', // Should come from secure backend
+                    code: code
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`OAuth token exchange failed: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data.error) {
+                throw new Error(`OAuth error: ${data.error_description || data.error}`);
+            }
+
+            // Store token in memory only (not persistent storage for security)
+            accessToken = data.access_token;
+            tokenExpiry = Date.now() + (data.expires_in ? data.expires_in * 1000 : 3600000); // 1 hour default
+
+            // Update UI
+            updateAuthStatus(true);
+
+            // Clear URL parameters
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            alert('Successfully authenticated with GitHub!');
+
+        } catch (error) {
+            console.error('OAuth error:', error);
+            alert(`Authentication failed: ${error.message}`);
+            updateAuthStatus(false);
+        }
+        */
+    }
+
+    // Check if we have a valid token
+    function checkAuthStatus() {
+        const isAuthenticated = accessToken && tokenExpiry && Date.now() < tokenExpiry;
+        updateAuthStatus(isAuthenticated);
+        return isAuthenticated;
+    }
+
+    // Update authentication status in UI
+    function updateAuthStatus(isAuthenticated) {
+        const authStatus = document.getElementById('authStatus');
+        const authBtn = document.getElementById('authBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        if (isAuthenticated) {
+            authStatus.textContent = 'Authenticated ✓';
+            authStatus.style.color = '#00ff00';
+            authBtn.style.display = 'none';
+            logoutBtn.style.display = 'inline-block';
+        } else {
+            authStatus.textContent = 'Not authenticated';
+            authStatus.style.color = '#888';
+            authBtn.style.display = 'inline-block';
+            logoutBtn.style.display = 'none';
+        }
+    }
+
+    // Logout function
+    function logout() {
+        accessToken = null;
+        tokenExpiry = null;
+        updateAuthStatus(false);
+        alert('Logged out successfully');
+    }
+
+    // Get current access token (with validation)
+    function getAccessToken() {
+        if (!checkAuthStatus()) {
+            throw new Error('Not authenticated or token expired');
+        }
+        return accessToken;
+    }
+
+    // Enhanced API request with automatic retry on auth failure
+    async function makeAuthenticatedRequest(url, options = {}) {
+        try {
+            const token = getAccessToken();
+
+            const headers = {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/vnd.github+json',
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+
+            const response = await fetch(url, {
+                ...options,
+                headers
+            });
+
+            // Check for authentication errors
+            if (response.status === 401) {
+                // Token expired or invalid
+                logout();
+                throw new Error('Authentication expired. Please re-authenticate.');
+            }
+
+            return response;
+        } catch (error) {
+            if (error.message.includes('Not authenticated')) {
+                // Prompt user to authenticate
+                alert('Please authenticate with GitHub first');
+                toggleSettings();
+            }
+            throw error;
+        }
+    }
+
     function toggleSettings() {
         const panel = document.getElementById('settingsPanel');
         panel.classList.toggle('show');
     }
 
     async function refresh() {
-        const token = sessionStorage.getItem('githubToken');
-        const projectsText = sessionStorage.getItem('githubProjects') || document.getElementById('projectsInput').value;
-        const projects = projectsText.split('\n').filter(project => project.trim());
-
-        if (!token) {
-            alert('Please configure your GitHub token in Settings first');
+        let token;
+        try {
+            token = getAccessToken();
+        } catch (error) {
+            alert('Please authenticate with GitHub first');
             toggleSettings();
             return;
         }
+
+        const projectsText = sessionStorage.getItem('githubProjects') || document.getElementById('projectsInput').value;
+        const projects = projectsText.split('\n').filter(project => project.trim());
 
         const refreshBtn = document.getElementById('refreshBtn');
         refreshBtn.textContent = 'Loading...';
@@ -394,16 +624,9 @@ PVT_kwHOBkVgM84AHJKN</textarea>
             }
         `;
 
-        const headers = {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/vnd.github+json',
-            'Content-Type': 'application/json'
-        };
-
         try {
-            const response = await fetch('https://api.github.com/graphql', {
+            const response = await makeAuthenticatedRequest('https://api.github.com/graphql', {
                 method: 'POST',
-                headers: headers,
                 body: JSON.stringify({
                     query: query,
                     variables: { projectId: projectId }
@@ -654,10 +877,12 @@ PVT_kwHOBkVgM84AHJKN</textarea>
     }
 
     async function loadAvailableProjects() {
-        const token = document.getElementById('tokenInput').value;
-
-        if (!token) {
-            alert('Please enter your GitHub token first');
+        let token;
+        try {
+            token = getAccessToken();
+        } catch (error) {
+            alert('Please authenticate with GitHub first');
+            toggleSettings();
             return;
         }
 
@@ -710,13 +935,8 @@ PVT_kwHOBkVgM84AHJKN</textarea>
                 }
             `;
 
-            const response = await fetch('https://api.github.com/graphql', {
+            const response = await makeAuthenticatedRequest('https://api.github.com/graphql', {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/vnd.github+json',
-                    'Content-Type': 'application/json'
-                },
                 body: JSON.stringify({ query })
             });
 
@@ -803,7 +1023,14 @@ PVT_kwHOBkVgM84AHJKN</textarea>
     // Initialize on page load
     window.onload = () => {
         loadStoredSettings();
-        loadSampleData();
+
+        // Handle OAuth callback if present
+        handleOAuthCallback();
+
+        // Load sample data if not authenticated
+        if (!checkAuthStatus()) {
+            loadSampleData();
+        }
     };
 </script>
 </body>

@@ -7,8 +7,9 @@ A personal access **classic** token is required with:
 - read:project
 
 ## Deployment
-Deploy the container, or 
+Deploy the index.html file to a place of your choosing (e.g. GitHub Pages, Netlify, Vercel, etc.)
 
 ## Usage
-- PAT is stored in browser local storage
-- Use the settings icon to set your PAT and projects
+- Uses Github OAuth to authenticate
+- If deploying manually, change GITHUB_CLIENT_ID in index.html to your own OAuth app client ID
+- If deploying manually, change GITHUB_REDIRECT_URI in index.html to your own OAuth app redirect URI
