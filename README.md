@@ -1,15 +1,11 @@
-# github-overview
-Simple HTML dashboard to collate multiple Github Project boards
+# gh-issue-dashboard
+Simple HTML dashboard to collate multiple Github Project boards.
 
-A personal access **classic** token is required with:
-- repo
-- read:org
-- read:project
+This can be useful if you keep track of tasks across multiple Github Projects, and what an overview of all tasks in one place.
 
 ## Deployment
 Deploy the index.html file to a place of your choosing (e.g. GitHub Pages, Netlify, Vercel, etc.)
 
 ## Usage
-- Uses Github OAuth to authenticate
+- Uses Github OAuth App to authenticate (https://github.com/settings/developers)
 - If deploying manually, change GITHUB_CLIENT_ID in index.html to your own OAuth app client ID
-- If deploying manually, change GITHUB_REDIRECT_URI in index.html to your own OAuth app redirect URI
