@@ -271,9 +271,7 @@
             Project IDs (one per line):
             <textarea id="projectsInput" rows="4" style="width: 300px;" placeholder="PVT_kwHOBkVgM84AHJKL
 PVT_kwHOBkVgM84AHJKM
-PVT_kwHOBkVgM84AHJKN">PVT_kwHOBkVgM84AHJKL
-PVT_kwHOBkVgM84AHJKM
-PVT_kwHOBkVgM84AHJKN</textarea>
+PVT_kwHOBkVgM84AHJKN"></textarea>
         </div>
         <div>
             Repositories for Workflow Status (one per line, format: owner/repo):
@@ -316,9 +314,9 @@ facebook/react"></textarea>
 <script>
     // Load settings from sessionStorage on page load
     function loadStoredSettings() {
-        const token = sessionStorage.getItem('githubToken');
-        const projects = sessionStorage.getItem('githubProjects');
-        const repositories = sessionStorage.getItem('githubRepositories');
+        const token = localStorage.getItem('githubToken');
+        const projects = localStorage.getItem('githubProjects');
+        const repositories = localStorage.getItem('githubRepositories');
 
         if (token) {
             document.getElementById('tokenInput').value = token;
@@ -337,13 +335,13 @@ facebook/react"></textarea>
         const repositories = document.getElementById('repositoriesInput').value;
 
         if (token) {
-            sessionStorage.setItem('githubToken', token);
+            localStorage.setItem('githubToken', token);
         }
         if (projects) {
-            sessionStorage.setItem('githubProjects', projects);
+            localStorage.setItem('githubProjects', projects);
         }
         if (repositories) {
-            sessionStorage.setItem('githubRepositories', repositories);
+            localStorage.setItem('githubRepositories', repositories);
         }
 
         toggleSettings();
@@ -356,9 +354,9 @@ facebook/react"></textarea>
     }
 
     async function refresh() {
-        const token = sessionStorage.getItem('githubToken') || document.getElementById('tokenInput').value;
-        const projectsText = sessionStorage.getItem('githubProjects') || document.getElementById('projectsInput').value;
-        const repositoriesText = sessionStorage.getItem('githubRepositories') || document.getElementById('repositoriesInput').value;
+        const token = localStorage.getItem('githubToken') || document.getElementById('tokenInput').value;
+        const projectsText = localStorage.getItem('githubProjects') || document.getElementById('projectsInput').value;
+        const repositoriesText = localStorage.getItem('githubRepositories') || document.getElementById('repositoriesInput').value;
         const projects = projectsText.split('\n').filter(project => project.trim());
         const repositories = repositoriesText.split('\n').filter(repo => repo.trim());
 
@@ -908,7 +906,7 @@ facebook/react"></textarea>
     }
 
     async function loadAvailableProjects() {
-        const token = document.getElementById('tokenInput').value || sessionStorage.getItem('githubToken');
+        const token = document.getElementById('tokenInput').value || localStorage.getItem('githubToken');
 
         if (!token) {
             alert('Please enter your GitHub token first');
@@ -1057,13 +1055,13 @@ facebook/react"></textarea>
     function clearAllProjects() {
         if (confirm('Are you sure you want to clear all project IDs? This will remove them from both the textarea and stored settings.')) {
             document.getElementById('projectsInput').value = '';
-            sessionStorage.removeItem('githubProjects');
+            localStorage.removeItem('githubProjects');
             alert('All project IDs cleared!');
         }
     }
 
     async function loadAvailableRepositories() {
-        const token = document.getElementById('tokenInput').value || sessionStorage.getItem('githubToken');
+        const token = document.getElementById('tokenInput').value || localStorage.getItem('githubToken');
 
         if (!token) {
             alert('Please enter your GitHub token first');
@@ -1214,7 +1212,7 @@ facebook/react"></textarea>
     function clearAllRepositories() {
         if (confirm('Are you sure you want to clear all repositories? This will remove them from both the textarea and stored settings.')) {
             document.getElementById('repositoriesInput').value = '';
-            sessionStorage.removeItem('githubRepositories');
+            localStorage.removeItem('githubRepositories');
             alert('All repositories cleared!');
         }
     }
@@ -1223,8 +1221,8 @@ facebook/react"></textarea>
     let workflowRefreshInterval = null;
 
     async function refreshWorkflowStatus() {
-        const token = sessionStorage.getItem('githubToken');
-        const repositoriesText = sessionStorage.getItem('githubRepositories');
+        const token = localStorage.getItem('githubToken');
+        const repositoriesText = localStorage.getItem('githubRepositories');
         const repositories = repositoriesText ? repositoriesText.split('\n').filter(repo => repo.trim()) : [];
 
         if (!token || repositories.length === 0) {
@@ -1263,8 +1261,8 @@ facebook/react"></textarea>
         loadStoredSettings();
 
         // Check if settings exist
-        const token = sessionStorage.getItem('githubToken');
-        const projects = sessionStorage.getItem('githubProjects');
+        const token = localStorage.getItem('githubToken');
+        const projects = localStorage.getItem('githubProjects');
 
         if (!token || !projects) {
             // No settings exist, show sample data and settings pane
